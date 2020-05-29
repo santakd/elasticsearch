@@ -107,31 +107,31 @@ public class DateFormatters {
     private static final DateTimeFormatter STRICT_DATE_OPTIONAL_TIME_FORMATTER = new DateTimeFormatterBuilder()
         .append(STRICT_YEAR_MONTH_DAY_FORMATTER)
         .optionalStart()
-        .appendLiteral('T')
-        .optionalStart()
-        .appendValue(HOUR_OF_DAY, 2, 2, SignStyle.NOT_NEGATIVE)
-        .optionalStart()
-        .appendLiteral(':')
-        .appendValue(MINUTE_OF_HOUR, 2, 2, SignStyle.NOT_NEGATIVE)
-        .optionalStart()
-        .appendLiteral(':')
-        .appendValue(SECOND_OF_MINUTE, 2, 2, SignStyle.NOT_NEGATIVE)
-        .optionalStart()
-        .appendFraction(NANO_OF_SECOND, 1, 9, true)
-        .optionalEnd()
-        .optionalStart()
-        .appendLiteral(',')
-        .appendFraction(NANO_OF_SECOND, 1, 9, false)
-        .optionalEnd()
-        .optionalEnd()
-        .optionalStart()
-        .appendZoneOrOffsetId()
-        .optionalEnd()
-        .optionalStart()
-        .append(TIME_ZONE_FORMATTER_NO_COLON)
-        .optionalEnd()
-        .optionalEnd()
-        .optionalEnd()
+            .appendLiteral('T')
+            .optionalStart()
+                .appendValue(HOUR_OF_DAY, 2, 2, SignStyle.NOT_NEGATIVE)
+                .optionalStart()
+                    .appendLiteral(':')
+                    .appendValue(MINUTE_OF_HOUR, 2, 2, SignStyle.NOT_NEGATIVE)
+                    .optionalStart()
+                        .appendLiteral(':')
+                        .appendValue(SECOND_OF_MINUTE, 2, 2, SignStyle.NOT_NEGATIVE)
+                        .optionalStart()
+                            .appendFraction(NANO_OF_SECOND, 1, 9, true)
+                        .optionalEnd()
+                        .optionalStart()
+                            .appendLiteral(',')
+                            .appendFraction(NANO_OF_SECOND, 1, 9, false)
+                        .optionalEnd()
+                    .optionalEnd()
+                .optionalEnd()
+                .optionalStart()
+                    .appendZoneOrOffsetId()
+                .optionalEnd()
+                .optionalStart()
+                    .append(TIME_ZONE_FORMATTER_NO_COLON)
+                .optionalEnd()
+            .optionalEnd()
         .optionalEnd()
         .toFormatter(Locale.ROOT)
         .withResolverStyle(ResolverStyle.STRICT);
@@ -1839,13 +1839,17 @@ public class DateFormatters {
      * @return The converted zoned date time
      */
     public static ZonedDateTime from(TemporalAccessor accessor) {
+        return from(accessor, ZoneOffset.UTC);
+    }
+
+    public static ZonedDateTime from(TemporalAccessor accessor, ZoneId defaultZone) {
         if (accessor instanceof ZonedDateTime) {
             return (ZonedDateTime) accessor;
         }
 
         ZoneId zoneId = accessor.query(TemporalQueries.zone());
         if (zoneId == null) {
-            zoneId = ZoneOffset.UTC;
+            zoneId = defaultZone;
         }
 
         LocalDate localDate = accessor.query(LOCAL_DATE_QUERY);
@@ -1931,7 +1935,7 @@ public class DateFormatters {
             } else {
                 return LocalDate.of(year, accessor.get(MONTH_OF_YEAR), 1);
             }
-        } else
+        }
 
         return LOCALDATE_EPOCH;
     }
@@ -1943,7 +1947,6 @@ public class DateFormatters {
         if(accessor.isSupported(ChronoField.YEAR_OF_ERA)){
             return accessor.get(ChronoField.YEAR_OF_ERA);
         }
-
         return 1970;
     }
 

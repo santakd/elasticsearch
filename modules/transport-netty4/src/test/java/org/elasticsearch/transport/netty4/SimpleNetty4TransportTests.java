@@ -19,7 +19,6 @@
 
 package org.elasticsearch.transport.netty4;
 
-import io.netty.buffer.PooledByteBufAllocator;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.cluster.node.DiscoveryNode;
@@ -33,6 +32,7 @@ import org.elasticsearch.indices.breaker.NoneCircuitBreakerService;
 import org.elasticsearch.transport.AbstractSimpleTransportTestCase;
 import org.elasticsearch.transport.ConnectTransportException;
 import org.elasticsearch.transport.ConnectionProfile;
+import org.elasticsearch.transport.SharedGroupFactory;
 import org.elasticsearch.transport.TcpChannel;
 import org.elasticsearch.transport.Transport;
 
@@ -47,17 +47,11 @@ import static org.hamcrest.Matchers.containsString;
 public class SimpleNetty4TransportTests extends AbstractSimpleTransportTestCase {
 
     @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        assertEquals(0, PooledByteBufAllocator.DEFAULT.metric().usedHeapMemory());
-        assertEquals(0, PooledByteBufAllocator.DEFAULT.metric().usedDirectMemory());
-    }
-
-    @Override
     protected Transport build(Settings settings, final Version version, ClusterSettings clusterSettings, boolean doHandshake) {
         NamedWriteableRegistry namedWriteableRegistry = new NamedWriteableRegistry(Collections.emptyList());
         return new Netty4Transport(settings, version, threadPool, new NetworkService(Collections.emptyList()),
-            PageCacheRecycler.NON_RECYCLING_INSTANCE, namedWriteableRegistry, new NoneCircuitBreakerService()) {
+            PageCacheRecycler.NON_RECYCLING_INSTANCE, namedWriteableRegistry, new NoneCircuitBreakerService(),
+            new SharedGroupFactory(settings)) {
 
             @Override
             public void executeHandshake(DiscoveryNode node, TcpChannel channel, ConnectionProfile profile,
@@ -73,7 +67,7 @@ public class SimpleNetty4TransportTests extends AbstractSimpleTransportTestCase 
 
     public void testConnectException() throws UnknownHostException {
         try {
-            serviceA.connectToNode(new DiscoveryNode("C", new TransportAddress(InetAddress.getByName("localhost"), 9876),
+            connectToNode(serviceA, new DiscoveryNode("C", new TransportAddress(InetAddress.getByName("localhost"), 9876),
                     emptyMap(), emptySet(),Version.CURRENT));
             fail("Expected ConnectTransportException");
         } catch (ConnectTransportException e) {
